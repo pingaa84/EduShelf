@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace projekpbobismillah.Controllers
 {
-    public class DashboardController
+    public class MemberDashboardController
     {
         private List<Book> _semuaBuku = new List<Book>();
 

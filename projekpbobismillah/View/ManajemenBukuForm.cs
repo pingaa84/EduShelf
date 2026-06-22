@@ -68,8 +68,6 @@ namespace projekpbobismillah.form
                 Console.WriteLine("Error load cover: " + ex.Message);
             }
 
-            // =========================================================================
-
             Label title = new Label();
             title.Text = book.Judul;
             title.Location = new Point(10, 150); 
@@ -103,7 +101,6 @@ namespace projekpbobismillah.form
             panel.DoubleClick += (s, e) => OpenBookReader(book);
 
             flowLayoutPanel1.Controls.Add(panel);
-            flowLayoutPanel1.Controls.Add(panel);
         }
 
         private void EditBook(Book book)
@@ -113,12 +110,8 @@ namespace projekpbobismillah.form
 
             if (form.DataSaved)
             {
-                bool sukses = _bukuController.ProsesUpdateBuku(book);
-                if (sukses)
-                {
-                    MessageBox.Show("Book updated");
-                    LoadBooks();
-                }
+                MessageBox.Show("Book updated");
+                LoadBooks();
             }
         }
 

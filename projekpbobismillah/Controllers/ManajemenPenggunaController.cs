@@ -9,21 +9,18 @@ using projekpbobismillah.models;
 
 namespace projekpbobismillah.Controllers
 {
-    
-        public class ManajemenPenggunaController
+    public class ManajemenPenggunaController
+    {
+        public DataTable DapatkanDaftarMember()
         {
-           
-            public DataTable DapatkanDaftarMember()
+            try
             {
-                try
-                {
-                    return Member.AmbilSemuaDaftarMember();
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception("Gagal memuat data member dari model: " + ex.Message);
-                }
+                return Member.AmbilSemuaDaftarMember();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Gagal memuat data member: " + ex.Message);
             }
         }
-    
+    }
 }

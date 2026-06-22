@@ -40,7 +40,7 @@ namespace projekpbobismillah.models
                         t.status AS status_transaksi,
                         t.tgl_transaksi,
                         t.metode_pembayaran,
-                        dt.status AS status_detail
+                        COALESCE(dt.status, t.status) AS status_detail
                     FROM Transaksi t
                     LEFT JOIN DetailTransaksi dt 
                         ON t.transaksi_id = dt.transaksi_id

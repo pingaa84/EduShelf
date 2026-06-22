@@ -8,17 +8,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using projekpbobismillah.Controllers;
 
 namespace projekpbobismillah.form
 {
     public partial class KelolaAkunAdmin : Form
     {
-        private string connString =
-            "Host=localhost;Port=5432;Database=pbofixamin;Username=postgres;Password=safirah74";
+        private KelolaAkunAdminController kelolaAkunController;
 
         public KelolaAkunAdmin()
         {
             InitializeComponent();
+            kelolaAkunController = new KelolaAkunAdminController();
             DataGridView();
         }
 
@@ -76,15 +77,14 @@ namespace projekpbobismillah.form
         {
             if (MessageBox.Show("Yakin ingin menghapus?", "Konfirmasi", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                using (var conn = new Npgsql.NpgsqlConnection(connString))
+                try
                 {
-                    conn.Open();
-                    string query = "DELETE FROM Admin WHERE admin_id=@id";
-                    using (var cmd = new Npgsql.NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("id", id);
-                        cmd.ExecuteNonQuery();
-                    }
+                    kelolaAkunController.HapusAdmin(id);
+                    LoadAdminList();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Gagal menghapus admin: " + ex.Message);
                 }
                 LoadAdminList();
             }
@@ -115,19 +115,8 @@ namespace projekpbobismillah.form
         {
             try
             {
-                using (var conn = new NpgsqlConnection(connString))
-                {
-                    conn.Open();
-                    string query = "SELECT admin_id, nama, email FROM Admin ORDER BY admin_id";
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    using (var adapter = new NpgsqlDataAdapter(cmd))
-                    {
-                        DataTable dt = new DataTable();
-                        adapter.Fill(dt);
-                        dgvAkunadmin.DataSource = dt;
-                    }
-                }
+                DataTable dt = kelolaAkunController.DapatkanDaftarAdmin();
+                dgvAkunadmin.DataSource = dt;
             }
             catch (Exception ex)
             {

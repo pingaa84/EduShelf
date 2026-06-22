@@ -2,11 +2,8 @@
 using projekpbobismillah.Interface;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace projekpbobismillah.models
 {
@@ -36,6 +33,7 @@ namespace projekpbobismillah.models
                     m.nama_depan,
                     m.nama_belakang,
                     m.email,
+                    m.password,
                     COALESCE(s.status, 'pending') AS status
                 FROM Member m
                 LEFT JOIN Subscription s 
@@ -68,31 +66,33 @@ namespace projekpbobismillah.models
             }
             return null; 
         }
-        public static System.Data.DataTable AmbilSemuaDaftarMember()
+        public static DataTable AmbilSemuaDaftarMember()
         {
             string connString = "Host=localhost;Port=5432;Database=pbofixamin;Username=postgres;Password=safirah74";
-            System.Data.DataTable dt = new System.Data.DataTable();
+            DataTable dt = new DataTable();
 
             using (var conn = new NpgsqlConnection(connString))
             {
                 conn.Open();
+
                 string query = @"
             SELECT 
                 m.member_id,
                 (m.nama_depan || ' ' || m.nama_belakang) AS nama_member,
                 m.email,
                 m.no_telepon,
-                m.password,
-                COALESCE(s.status, '-') AS subscription_status
+                COALESCE(s.status, 'free') AS subscription_status
             FROM Member m
             LEFT JOIN (
                 SELECT DISTINCT ON (member_id)
                     member_id,
-                    status
+                    status,
+                    start_date,
+                    end_date
                 FROM Subscription
-                ORDER BY member_id, start_date DESC
+                ORDER BY member_id, start_date DESC, end_date DESC
             ) s
-            ON m.member_id = s.member_id
+                ON m.member_id = s.member_id
             ORDER BY m.member_id ASC;
         ";
 
@@ -102,6 +102,7 @@ namespace projekpbobismillah.models
                     adapter.Fill(dt);
                 }
             }
+
             return dt;
         }
         public static int RegistrasiMemberBaru(string namaDepan, string namaBelakang, string email, string password)
@@ -113,7 +114,30 @@ namespace projekpbobismillah.models
             {
                 conn.Open();
 
-                string queryMember = @"
+                using (var transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        string cekEmailQuery = @"
+                    SELECT COUNT(*) 
+                    FROM Member 
+                    WHERE LOWER(email) = LOWER(@email);
+                ";
+
+                        using (var cekCmd = new NpgsqlCommand(cekEmailQuery, conn))
+                        {
+                            cekCmd.Transaction = transaction;
+                            cekCmd.Parameters.AddWithValue("email", email);
+
+                            int jumlahEmail = Convert.ToInt32(cekCmd.ExecuteScalar());
+
+                            if (jumlahEmail > 0)
+                            {
+                                throw new Exception("Email sudah terdaftar.");
+                            }
+                        }
+
+                        string queryMember = @"
                     INSERT INTO Member
                     (nama_depan, nama_belakang, email, password, no_telepon, foto_profil, bio)
                     VALUES
@@ -121,34 +145,46 @@ namespace projekpbobismillah.models
                     RETURNING member_id;
                 ";
 
-                using (var cmd = new NpgsqlCommand(queryMember, conn))
-                {
-                    cmd.Parameters.AddWithValue("nama_depan", namaDepan);
-                    cmd.Parameters.AddWithValue("nama_belakang", namaBelakang);
-                    cmd.Parameters.AddWithValue("email", email);
-                    cmd.Parameters.AddWithValue("password", password);
-                    cmd.Parameters.AddWithValue("telp", "-");
-                    cmd.Parameters.AddWithValue("foto", "-");
-                    cmd.Parameters.AddWithValue("bio", "-");
+                        using (var cmd = new NpgsqlCommand(queryMember, conn))
+                        {
+                            cmd.Transaction = transaction;
 
-                    newMemberId = Convert.ToInt32(cmd.ExecuteScalar());
-                }
+                            cmd.Parameters.AddWithValue("nama_depan", namaDepan);
+                            cmd.Parameters.AddWithValue("nama_belakang", namaBelakang);
+                            cmd.Parameters.AddWithValue("email", email);
+                            cmd.Parameters.AddWithValue("password", password);
+                            cmd.Parameters.AddWithValue("telp", "-");
+                            cmd.Parameters.AddWithValue("foto", "-");
+                            cmd.Parameters.AddWithValue("bio", "-");
 
-                string querySub = @"
+                            newMemberId = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
+
+                        string querySub = @"
                     INSERT INTO Subscription
                     (member_id, plan, harga, start_date, end_date, status)
                     VALUES
                     (@id, 'Premium', 0, NOW(), NOW() + INTERVAL '30 days', 'pending');
                 ";
 
-                using (var subCmd = new NpgsqlCommand(querySub, conn))
-                {
-                    subCmd.Parameters.AddWithValue("id", newMemberId);
-                    subCmd.ExecuteNonQuery();
+                        using (var subCmd = new NpgsqlCommand(querySub, conn))
+                        {
+                            subCmd.Transaction = transaction;
+                            subCmd.Parameters.AddWithValue("id", newMemberId);
+                            subCmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
 
-            return newMemberId; 
+            return newMemberId;
         }
     
         public bool HasActiveSubscription()

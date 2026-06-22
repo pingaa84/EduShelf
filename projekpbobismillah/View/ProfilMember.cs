@@ -1,24 +1,23 @@
-﻿using Npgsql;
+﻿using projekpbobismillah.Controllers;
 using projekpbobismillah.models;
 using System;
+using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-
 namespace projekpbobismillah.form
 {
     public partial class ProfilMember : Form
     {
-        private string connString =
-            "Host=localhost;Port=5432;Database=pbofixamin;Username=postgres;Password=safirah74";
-
         private string fotoPath = "";
         private Member currentMember;
+        private ProfilMemberController _profilController;
 
         public ProfilMember(Member member)
         {
             InitializeComponent();
             currentMember = member;
+            _profilController = new ProfilMemberController();
         }
         private void ProfilMember_Load(object sender, EventArgs e)
         {
@@ -33,41 +32,45 @@ namespace projekpbobismillah.form
         }
         private void LoadProfile()
         {
-            using (var conn = new NpgsqlConnection(connString))
+            try
             {
-                conn.Open();
+                DataTable dt = _profilController.DapatkanProfilMember(currentMember.UserID);
 
-                string query = "SELECT * FROM Member WHERE member_id=@id";
-
-                using (var cmd = new NpgsqlCommand(query, conn))
+                if (dt.Rows.Count > 0)
                 {
-                    cmd.Parameters.AddWithValue("@id", currentMember.UserID);
+                    DataRow row = dt.Rows[0];
 
-                    using (var reader = cmd.ExecuteReader())
+                    txtNamaDepan.Text = row["nama_depan"].ToString();
+                    txtNamaBelakang.Text = row["nama_belakang"].ToString();
+                    txtEmail.Text = row["email"].ToString();
+                    txtNoTelp.Text = row["no_telepon"].ToString();
+                    txtBio.Text = row["bio"].ToString();
+
+                    fotoPath = row["foto_profil"].ToString();
+
+                    if (!string.IsNullOrEmpty(fotoPath))
                     {
-                        if (reader.Read())
+                        string fullPath = Path.Combine(Application.StartupPath, fotoPath);
+
+                        if (File.Exists(fullPath))
                         {
-                            txtNamaDepan.Text = reader["nama_depan"].ToString();
-                            txtNamaBelakang.Text = reader["nama_belakang"].ToString();
-                            txtEmail.Text = reader["email"].ToString();
-                            txtNoTelp.Text = reader["no_telepon"].ToString();
-                            txtBio.Text = reader["bio"].ToString();
-
-                            fotoPath = reader["foto_profil"].ToString();
-
-                            if (!string.IsNullOrEmpty(fotoPath))
-                            {
-                                string fullPath = Path.Combine(Application.StartupPath, fotoPath);
-
-                                if (File.Exists(fullPath))
-                                {
-                                    picProfil.Image = Image.FromFile(fullPath);
-                                    picProfil.SizeMode = PictureBoxSizeMode.Zoom;
-                                }
-                            }
+                            picProfil.Image = Image.FromFile(fullPath);
+                            picProfil.SizeMode = PictureBoxSizeMode.Zoom;
+                        }
+                        else
+                        {
+                            picProfil.Image = null;
                         }
                     }
+                    else
+                    {
+                        picProfil.Image = null;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal memuat profil: " + ex.Message);
             }
         }
         private void btnSimpan_Click(object sender, EventArgs e)
@@ -78,36 +81,32 @@ namespace projekpbobismillah.form
                 return;
             }
 
-            using (var conn = new NpgsqlConnection(connString))
+            try
             {
-                conn.Open();
+                bool sukses = _profilController.SimpanProfilMember(
+                    currentMember.UserID,
+                    txtNamaDepan.Text,
+                    txtNamaBelakang.Text,
+                    txtEmail.Text,
+                    txtNoTelp.Text,
+                    txtBio.Text,
+                    fotoPath
+                );
 
-                string query = @"
-                    UPDATE Member 
-                    SET nama_depan=@namaDepan,
-                        nama_belakang=@namaBelakang,
-                        email=@email,
-                        no_telepon=@telp,
-                        bio=@bio,
-                        foto_profil=@foto
-                    WHERE member_id=@id";
-
-                using (var cmd = new NpgsqlCommand(query, conn))
+                if (sukses)
                 {
-                    cmd.Parameters.AddWithValue("@namaDepan", txtNamaDepan.Text);
-                    cmd.Parameters.AddWithValue("@namaBelakang", txtNamaBelakang.Text);
-                    cmd.Parameters.AddWithValue("@email", txtEmail.Text);
-                    cmd.Parameters.AddWithValue("@telp", txtNoTelp.Text);
-                    cmd.Parameters.AddWithValue("@bio", txtBio.Text);
-                    cmd.Parameters.AddWithValue("@foto", fotoPath ?? "");
-                    cmd.Parameters.AddWithValue("@id", currentMember.UserID);
-
-                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("Profil berhasil disimpan!");
+                    LoadProfile();
+                }
+                else
+                {
+                    MessageBox.Show("Profil gagal disimpan!");
                 }
             }
-
-            MessageBox.Show("Profil berhasil disimpan!");
-            LoadProfile();
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal menyimpan profil: " + ex.Message);
+            }
         }
         private void btnBatal_Click(object sender, EventArgs e)
         {

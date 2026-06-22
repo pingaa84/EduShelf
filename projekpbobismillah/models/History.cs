@@ -36,18 +36,23 @@ namespace projekpbobismillah.models
             using (var conn = new NpgsqlConnection(connString))
             {
                 conn.Open();
+
                 string query = @"
-                    SELECT 
-                        h.history_id, 
-                        h.buku_id, 
-                        h.halaman_terakhir, 
-                        h.terakhir_dibaca, 
-                        b.judul, 
-                        b.penulis
-                    FROM public.history h
-                    JOIN public.buku b ON b.buku_id = h.buku_id
-                    WHERE h.member_id = @memberId
-                    ORDER BY h.terakhir_dibaca DESC;";
+            SELECT 
+                h.buku_id,
+                b.judul,
+                b.penulis,
+                COALESCE(c.chapter_title, '-') AS chapter_title,
+                h.halaman_terakhir,
+                h.terakhir_dibaca
+            FROM public.history h
+            JOIN public.buku b 
+                ON b.buku_id = h.buku_id
+            LEFT JOIN public.chapter c
+                ON c.chapter_id = h.chapter_id
+            WHERE h.member_id = @memberId
+            ORDER BY h.terakhir_dibaca DESC;
+        ";
 
                 using (var cmd = new NpgsqlCommand(query, conn))
                 {
@@ -59,6 +64,7 @@ namespace projekpbobismillah.models
                     }
                 }
             }
+
             return dt;
         }
         public void SaveProgress(int page)

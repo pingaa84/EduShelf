@@ -8,13 +8,13 @@ namespace projekpbobismillah.form
     public partial class RiwayatTransaksiForm : Form
     {
         private Member currentMember;
-        private TransaksiController _transaksiController;
+        private RiwayatTransaksiController transaksiController;
 
         public RiwayatTransaksiForm(Member member)
         {
             InitializeComponent();
             currentMember = member;
-            _transaksiController = new TransaksiController();
+            transaksiController = new RiwayatTransaksiController();
         }
 
         private void RiwayatTransaksiForm_Load(object sender, EventArgs e)
@@ -25,7 +25,7 @@ namespace projekpbobismillah.form
         {
             try
             {
-                DataTable dt = _transaksiController.DapatkanRiwayatTransaksi(currentMember.UserID);
+                DataTable dt = transaksiController.DapatkanRiwayatTransaksi(currentMember.UserID);
 
                 dgvRiwayatTransaksi.DataSource = dt;
             }

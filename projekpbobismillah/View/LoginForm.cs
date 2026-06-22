@@ -19,7 +19,7 @@ namespace projekpbobismillah
 
         private void btnDaftar_Click(object sender, EventArgs e)
         {
-            Daftarakun form = new Daftarakun();
+            DaftarAkun form = new DaftarAkun();
             form.Show();
             this.Hide();
         }

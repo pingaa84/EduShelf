@@ -39,6 +39,10 @@ namespace projekpbobismillah.form
             dgvHistory.Columns[indexPenulis].DataPropertyName = "penulis";
             dgvHistory.Columns[indexPenulis].Width = 150;
 
+            int indexChapter = dgvHistory.Columns.Add("chapter_title", "Chapter Terakhir");
+            dgvHistory.Columns[indexChapter].DataPropertyName = "chapter_title";
+            dgvHistory.Columns[indexChapter].Width = 180;
+
             int indexHalaman = dgvHistory.Columns.Add("halaman_terakhir", "Halaman Terakhir");
             dgvHistory.Columns[indexHalaman].DataPropertyName = "halaman_terakhir";
             dgvHistory.Columns[indexHalaman].Width = 120;
@@ -71,7 +75,7 @@ namespace projekpbobismillah.form
             int bukuId = Convert.ToInt32(dataRow["buku_id"]);
             int lastPage = Convert.ToInt32(dataRow["halaman_terakhir"]);
 
-            halamanbaca reader = new halamanbaca(bukuId, currentMember, lastPage);
+            HalamanBaca reader = new HalamanBaca(bukuId, currentMember, lastPage);
             reader.Show();
             this.Hide();
         }

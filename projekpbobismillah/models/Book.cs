@@ -20,7 +20,17 @@ namespace projekpbobismillah.models
             using (var conn = new NpgsqlConnection(connString))
             {
                 conn.Open();
-                string query = "SELECT * FROM Buku ORDER BY buku_id DESC";
+
+                string query = @"
+            SELECT 
+                buku_id,
+                judul,
+                penulis,
+                cover,
+                COALESCE(kategori_id, 0) AS kategori_id
+            FROM Buku
+            ORDER BY buku_id DESC;
+        ";
 
                 using (var cmd = new NpgsqlCommand(query, conn))
                 using (var reader = cmd.ExecuteReader())
@@ -32,12 +42,15 @@ namespace projekpbobismillah.models
                             IDBuku = reader["buku_id"].ToString(),
                             Judul = reader["judul"].ToString(),
                             Author = reader["penulis"].ToString(),
-                            Cover = reader["cover"].ToString()
+                            Cover = reader["cover"].ToString(),
+                            IDCategory = Convert.ToInt32(reader["kategori_id"])
                         };
+
                         daftarBuku.Add(book);
                     }
                 }
             }
+
             return daftarBuku;
         }
         public static void TambahBuku(Book book)
@@ -88,21 +101,48 @@ namespace projekpbobismillah.models
         public static void HapusBuku(string id)
         {
             string connString = "Host=localhost;Port=5432;Database=pbofixamin;Username=postgres;Password=safirah74";
+
             using (var conn = new NpgsqlConnection(connString))
             {
                 conn.Open();
 
-                string queryHistory = "DELETE FROM public.history WHERE buku_id = @id";
-                using (var cmdHistory = new NpgsqlCommand(queryHistory, conn))
+                using (var transaction = conn.BeginTransaction())
                 {
-                    cmdHistory.Parameters.AddWithValue("id", int.Parse(id));
-                    cmdHistory.ExecuteNonQuery(); 
-                }
-                string queryBuku = "DELETE FROM Buku WHERE buku_id = @id";
-                using (var cmdBuku = new NpgsqlCommand(queryBuku, conn))
-                {
-                    cmdBuku.Parameters.AddWithValue("id", int.Parse(id));
-                    cmdBuku.ExecuteNonQuery(); 
+                    try
+                    {
+                        int bukuId = int.Parse(id);
+
+                        string queryHistory = "DELETE FROM public.history WHERE buku_id = @id";
+                        using (var cmdHistory = new NpgsqlCommand(queryHistory, conn))
+                        {
+                            cmdHistory.Transaction = transaction;
+                            cmdHistory.Parameters.AddWithValue("id", bukuId);
+                            cmdHistory.ExecuteNonQuery();
+                        }
+
+                        string queryChapter = "DELETE FROM Chapter WHERE buku_id = @id";
+                        using (var cmdChapter = new NpgsqlCommand(queryChapter, conn))
+                        {
+                            cmdChapter.Transaction = transaction;
+                            cmdChapter.Parameters.AddWithValue("id", bukuId);
+                            cmdChapter.ExecuteNonQuery();
+                        }
+
+                        string queryBuku = "DELETE FROM Buku WHERE buku_id = @id";
+                        using (var cmdBuku = new NpgsqlCommand(queryBuku, conn))
+                        {
+                            cmdBuku.Transaction = transaction;
+                            cmdBuku.Parameters.AddWithValue("id", bukuId);
+                            cmdBuku.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
             }
         }

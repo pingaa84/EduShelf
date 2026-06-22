@@ -12,18 +12,18 @@ namespace projekpbobismillah.form
     {
         public Member currentMember;
 
-        private DashboardController _dashboardController;
+        private MemberDashboardController dashboardController;
 
         public MemberDashboard(Member member)
         {
             InitializeComponent();
             currentMember = member;
-            _dashboardController = new DashboardController();
+            dashboardController = new MemberDashboardController();
         }
 
         private void MemberDashboard_Load(object sender, EventArgs e)
         {
-            RenderBukuKeDashboard(_dashboardController.MuatBuku());
+            RenderBukuKeDashboard(dashboardController.MuatBuku());
             SetupSearchTextBox();
         }
         private void RenderBukuKeDashboard(List<Book> daftarBuku)
@@ -83,7 +83,7 @@ namespace projekpbobismillah.form
 
         private void txtCari_TextChanged(object sender, EventArgs e)
         {
-            List<Book> hasilFilter = _dashboardController.CariBuku(txtCari.Text);
+            List<Book> hasilFilter = dashboardController.CariBuku(txtCari.Text);
 
             RenderBukuKeDashboard(hasilFilter);
         }
@@ -116,7 +116,7 @@ namespace projekpbobismillah.form
 
         private void OpenReader(Book book)
         {
-            halamanbaca reader = new halamanbaca(Convert.ToInt32(book.IDBuku), currentMember, 1);
+            HalamanBaca reader = new HalamanBaca(Convert.ToInt32(book.IDBuku), currentMember, 1);
             reader.Show();
             this.Hide();
         }

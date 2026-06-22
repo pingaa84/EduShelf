@@ -23,7 +23,13 @@ namespace projekpbobismillah.Controllers
             string plan = "Premium";
             decimal harga = 100000;
 
-            if (metodeBayar == "Unknown")
+            if (member == null)
+            {
+                MessageBox.Show("Data member tidak valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(metodeBayar) || metodeBayar == "Unknown")
             {
                 MessageBox.Show("Silakan pilih metode pembayaran terlebih dahulu!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -34,10 +40,15 @@ namespace projekpbobismillah.Controllers
                 bool sukses = Subscription.ProsesPembayaranPremium(member.UserID, metodeBayar, harga);
 
                 if (sukses)
-                { 
+                {
                     member.Subscribe(plan, harga);
 
-                    MessageBox.Show($"Pembayaran {metodeBayar} berhasil!\nAkun sekarang ACTIVE.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        $"Pembayaran melalui {metodeBayar} berhasil!\nAkun sekarang ACTIVE.",
+                        "Sukses",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
 
                     MemberDashboard dash = new MemberDashboard(member);
                     dash.Show();
@@ -45,12 +56,22 @@ namespace projekpbobismillah.Controllers
                 }
                 else
                 {
-                    MessageBox.Show("Gagal memproses pembayaran. Data langganan tidak ditemukan.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(
+                        "Gagal memproses pembayaran. Silakan coba lagi.",
+                        "Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error
+                    );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Payment error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Payment error: " + ex.Message,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
             }
         }
     }

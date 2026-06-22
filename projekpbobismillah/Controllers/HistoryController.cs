@@ -12,13 +12,18 @@ namespace projekpbobismillah.Controllers
     {
         public DataTable DapatkanRiwayat(int memberId)
         {
+            if (memberId <= 0)
+            {
+                throw new Exception("Member tidak valid.");
+            }
+
             try
             {
                 return History.AmbilRiwayatOlehMember(memberId);
             }
             catch (Exception ex)
             {
-                throw new Exception("Gagal mengambil data dari model: " + ex.Message);
+                throw new Exception("Gagal mengambil data riwayat bacaan: " + ex.Message);
             }
         }
     }

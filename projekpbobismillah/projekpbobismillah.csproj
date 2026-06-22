@@ -145,15 +145,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controllers\AddEditBookController.cs" />
     <Compile Include="Controllers\ChapterController.cs" />
     <Compile Include="Controllers\DaftarAkunController.cs" />
     <Compile Include="Controllers\DashboardAdminController.cs" />
+    <Compile Include="Controllers\HalamanBacaController.cs" />
     <Compile Include="Controllers\HistoryController.cs" />
+    <Compile Include="Controllers\KelolaAkunAdminController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\ManajemenBukuController.cs" />
     <Compile Include="Controllers\ManajemenPenggunaController.cs" />
     <Compile Include="Controllers\MemberDashboardController.cs" />
     <Compile Include="Controllers\PaymentController.cs" />
+    <Compile Include="Controllers\ProfilMemberController.cs" />
     <Compile Include="Controllers\RiwayatTransaksiController.cs" />
     <Compile Include="Controllers\SubscriptionController.cs" />
     <Compile Include="DatabaseHelper.cs" />
@@ -169,11 +173,11 @@
     <Compile Include="View\ChapterForm.Designer.cs">
       <DependentUpon>ChapterForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="View\Daftarakun.cs">
+    <Compile Include="View\DaftarAkun.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\Daftarakun.Designer.cs">
-      <DependentUpon>Daftarakun.cs</DependentUpon>
+    <Compile Include="View\DaftarAkun.Designer.cs">
+      <DependentUpon>DaftarAkun.cs</DependentUpon>
     </Compile>
     <Compile Include="View\DashboardadminForm.cs">
       <SubType>Form</SubType>
@@ -187,11 +191,11 @@
     <Compile Include="View\Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
-    <Compile Include="View\halamanbaca.cs">
+    <Compile Include="View\HalamanBaca.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\halamanbaca.Designer.cs">
-      <DependentUpon>halamanbaca.cs</DependentUpon>
+    <Compile Include="View\HalamanBaca.Designer.cs">
+      <DependentUpon>HalamanBaca.cs</DependentUpon>
     </Compile>
     <Compile Include="View\HistoryForm.cs">
       <SubType>Form</SubType>
@@ -253,23 +257,23 @@
     <Compile Include="View\TambahAkunAdmin.Designer.cs">
       <DependentUpon>TambahAkunAdmin.cs</DependentUpon>
     </Compile>
-    <Compile Include="interface\IAuth.cs" />
-    <Compile Include="interface\ISubscriptionActions.cs" />
+    <Compile Include="Interface\IAuth.cs" />
+    <Compile Include="Interface\ISubscriptionActions.cs" />
     <Compile Include="View\LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="View\LoginForm.Designer.cs">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="models\Admin.cs" />
-    <Compile Include="models\Book.cs" />
-    <Compile Include="models\Chapter.cs" />
-    <Compile Include="models\History.cs" />
-    <Compile Include="models\Kategori.cs" />
-    <Compile Include="models\Member.cs" />
-    <Compile Include="models\RiwayatTransaksi.cs" />
-    <Compile Include="models\Subscription.cs" />
-    <Compile Include="models\User.cs" />
+    <Compile Include="Models\Admin.cs" />
+    <Compile Include="Models\Book.cs" />
+    <Compile Include="Models\Chapter.cs" />
+    <Compile Include="Models\History.cs" />
+    <Compile Include="Models\Kategori.cs" />
+    <Compile Include="Models\Member.cs" />
+    <Compile Include="Models\RiwayatTransaksi.cs" />
+    <Compile Include="Models\Subscription.cs" />
+    <Compile Include="Models\User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="View\AddEditBook.resx">
@@ -278,8 +282,8 @@
     <EmbeddedResource Include="View\ChapterForm.resx">
       <DependentUpon>ChapterForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="View\Daftarakun.resx">
-      <DependentUpon>Daftarakun.cs</DependentUpon>
+    <EmbeddedResource Include="View\DaftarAkun.resx">
+      <DependentUpon>DaftarAkun.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="View\DashboardadminForm.resx">
       <DependentUpon>DashboardadminForm.cs</DependentUpon>
@@ -287,8 +291,8 @@
     <EmbeddedResource Include="View\Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="View\halamanbaca.resx">
-      <DependentUpon>halamanbaca.cs</DependentUpon>
+    <EmbeddedResource Include="View\HalamanBaca.resx">
+      <DependentUpon>HalamanBaca.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="View\HistoryForm.resx">
       <DependentUpon>HistoryForm.cs</DependentUpon>

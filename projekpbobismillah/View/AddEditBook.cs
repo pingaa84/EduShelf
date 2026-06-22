@@ -1,6 +1,8 @@
 ﻿using Npgsql;
+using projekpbobismillah.Controllers;
 using projekpbobismillah.models;
 using System;
+using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -17,19 +19,20 @@ namespace projekpbobismillah.form
 
         public string CoverPath { get; set; }
 
-        private string connString =
-            "Host=localhost;Port=5432;Database=pbofixamin;Username=postgres;Password=safirah74";
+        private AddEditBookController addEditBookController;
         public AddEditBook()
         {
             InitializeComponent();
+            addEditBookController = new AddEditBookController();
         }
 
         public AddEditBook(Book book)
         {
             InitializeComponent();
+            addEditBookController = new AddEditBookController();
 
             editBook = book;
-
+             
             int.TryParse(book.IDBuku, out bukuId);
 
             txtTitle.Text = book.Judul;
@@ -70,24 +73,22 @@ namespace projekpbobismillah.form
         {
             cmbKategori.Items.Clear();
 
-            using (var conn = new NpgsqlConnection(connString))
+            try
             {
-                conn.Open();
+                DataTable dt = addEditBookController.DapatkanKategori();
 
-                string query = "SELECT kategori_id, nama_kategori FROM Kategori";
-
-                using (var cmd = new NpgsqlCommand(query, conn))
-                using (var reader = cmd.ExecuteReader())
+                foreach (DataRow row in dt.Rows)
                 {
-                    while (reader.Read())
+                    cmbKategori.Items.Add(new ComboBoxItem
                     {
-                        cmbKategori.Items.Add(new ComboBoxItem
-                        {
-                            Text = reader["nama_kategori"].ToString(),
-                            Value = reader["kategori_id"]
-                        });
-                    }
+                        Text = row["nama_kategori"].ToString(),
+                        Value = row["kategori_id"]
+                    });
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal memuat kategori: " + ex.Message);
             }
         }
         private void btnUploadCover_Click(object sender, EventArgs e)
@@ -126,7 +127,7 @@ namespace projekpbobismillah.form
         private void btnSave_Click_1(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtTitle.Text) ||
-                string.IsNullOrWhiteSpace(txtAuthor.Text))
+         string.IsNullOrWhiteSpace(txtAuthor.Text))
             {
                 MessageBox.Show("Judul dan Author wajib diisi!");
                 return;
@@ -138,49 +139,40 @@ namespace projekpbobismillah.form
                 return;
             }
 
-            ComboBoxItem kategori = (ComboBoxItem)cmbKategori.SelectedItem;
-
-            using (var conn = new NpgsqlConnection(connString))
+            try
             {
-                conn.Open();
+                ComboBoxItem kategori = (ComboBoxItem)cmbKategori.SelectedItem;
 
-                string query;
-
-                if (editBook == null)
+                Book book = new Book
                 {
-                    query = @"
-                        INSERT INTO Buku 
-                        (judul, penulis, cover, kategori_id)
-                        VALUES 
-                        (@judul, @penulis, @cover, @kategori)";
-                }
-                else
+                    IDBuku = editBook == null ? "" : bukuId.ToString(),
+                    Judul = txtTitle.Text.Trim(),
+                    Author = txtAuthor.Text.Trim(),
+                    Cover = CoverPath ?? "",
+                    IDCategory = Convert.ToInt32(kategori.Value)
+                };
+
+                int savedBookId = addEditBookController.SimpanBuku(book, book.IDCategory);
+
+                bukuId = savedBookId;
+
+                if (editBook != null)
                 {
-                    query = @"
-                        UPDATE Buku 
-                        SET judul=@judul,
-                            penulis=@penulis,
-                            cover=@cover,
-                            kategori_id=@kategori
-                        WHERE buku_id=@id";
+                    editBook.IDBuku = savedBookId.ToString();
+                    editBook.Judul = book.Judul;
+                    editBook.Author = book.Author;
+                    editBook.Cover = book.Cover;
+                    editBook.IDCategory = book.IDCategory;
                 }
 
-                using (var cmd = new NpgsqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@judul", txtTitle.Text);
-                    cmd.Parameters.AddWithValue("@penulis", txtAuthor.Text);
-                    cmd.Parameters.AddWithValue("@cover", CoverPath ?? "");
-                    cmd.Parameters.AddWithValue("@kategori", Convert.ToInt32(kategori.Value));
-
-                    if (editBook != null)
-                        cmd.Parameters.AddWithValue("@id", bukuId);
-
-                    cmd.ExecuteNonQuery();
-                }
+                DataSaved = true;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
             }
-
-            DataSaved = true;
-            this.Close();
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal menyimpan buku: " + ex.Message);
+            }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)

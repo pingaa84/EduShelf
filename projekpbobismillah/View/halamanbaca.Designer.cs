@@ -1,6 +1,6 @@
 ﻿namespace projekpbobismillah.form
 {
-    partial class halamanbaca
+    partial class HalamanBaca
     {
         /// <summary>
         /// Required designer variable.

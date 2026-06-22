@@ -8,36 +8,56 @@ using projekpbobismillah.models;
 
 namespace projekpbobismillah.Controllers
 {
-        public class ManajemenBukuController
+    public class ManajemenBukuController
+    {
+        public List<Book> DapatkanSemuaBuku()
         {
-            public List<Book> DapatkanSemuaBuku()
-            {
-                return Book.AmbilSemuaBuku();
-            }
-
-            public bool ProsesSimpanBuku(Book book)
-            {
-                if (string.IsNullOrWhiteSpace(book.Judul) || string.IsNullOrWhiteSpace(book.Author))
-                {
-                    return false;
-                }
-                Book.TambahBuku(book);
-                return true;
-            }
-
-            public bool ProsesUpdateBuku(Book book)
-            {
-                if (string.IsNullOrWhiteSpace(book.Judul) || string.IsNullOrWhiteSpace(book.Author) || string.IsNullOrEmpty(book.IDBuku))
-                {
-                    return false;
-                }
-                Book.UbahBuku(book);
-                return true;
-            }
-
-            public void ProsesHapusBuku(string id)
-            {
-                Book.HapusBuku(id);
-            }
+            return Book.AmbilSemuaBuku();
         }
+
+        public bool ProsesSimpanBuku(Book book)
+        {
+            if (book == null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(book.Judul) ||
+                string.IsNullOrWhiteSpace(book.Author))
+            {
+                return false;
+            }
+
+            Book.TambahBuku(book);
+            return true;
+        }
+
+        public bool ProsesUpdateBuku(Book book)
+        {
+            if (book == null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(book.Judul) ||
+                string.IsNullOrWhiteSpace(book.Author) ||
+                string.IsNullOrEmpty(book.IDBuku))
+            {
+                return false;
+            }
+
+            Book.UbahBuku(book);
+            return true;
+        }
+
+        public void ProsesHapusBuku(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new Exception("ID buku tidak valid.");
+            }
+
+            Book.HapusBuku(id);
+        }
+    }
 }

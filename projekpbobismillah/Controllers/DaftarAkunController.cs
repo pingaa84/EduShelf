@@ -7,12 +7,28 @@ using System.Threading.Tasks;
 using projekpbobismillah.models;
 
 namespace projekpbobismillah.Controllers
-{
+{   
     public class DaftarAkunController
     {
         public Member ProsesDaftar(string namaLengkap, string email, string password)
         {
-            string[] parts = namaLengkap.Split(' ');
+            if (string.IsNullOrWhiteSpace(namaLengkap))
+            {
+                throw new Exception("Nama lengkap wajib diisi.");
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new Exception("Email wajib diisi.");
+            }
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                throw new Exception("Password wajib diisi.");
+            }
+
+            string[] parts = namaLengkap.Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
             string namaDepan = parts[0];
             string namaBelakang = parts.Length > 1
                 ? string.Join(" ", parts, 1, parts.Length - 1)

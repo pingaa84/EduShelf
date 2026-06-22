@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace projekpbobismillah.Controllers
 {
     
-        public class TransaksiController
+        public class RiwayatTransaksiController
         {
             public DataTable DapatkanRiwayatTransaksi(int memberId)
             {

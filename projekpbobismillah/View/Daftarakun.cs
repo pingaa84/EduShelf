@@ -5,18 +5,18 @@ using projekpbobismillah.Controllers;
 
 namespace projekpbobismillah.form
 {
-    public partial class Daftarakun : Form
+    public partial class DaftarAkun : Form
     {
         private string initialEmail;
         private DaftarAkunController _registrasiController;
 
-        public Daftarakun()
+        public DaftarAkun()
         {
             InitializeComponent();
             _registrasiController = new DaftarAkunController();
         }
 
-        public Daftarakun(string email)
+        public DaftarAkun(string email)
         {
             InitializeComponent();
             _registrasiController = new DaftarAkunController();

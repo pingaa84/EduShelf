@@ -23,7 +23,7 @@ namespace projekpbobismillah.models
             SubscriptionID = subID;
             Plan = plan;
             Harga = harga;
-            Status = "aktif";
+            Status = "active";
             StartDate = DateTime.Now;
             EndDate = DateTime.Now.AddDays(30);
         }
@@ -47,60 +47,96 @@ namespace projekpbobismillah.models
 
         public static bool ProsesPembayaranPremium(int memberId, string metodeBayar, decimal harga)
         {
-            try
+            using (var conn = new NpgsqlConnection(connString))
             {
-                using (var conn = new NpgsqlConnection(connString))
+                conn.Open();
+
+                using (var transaction = conn.BeginTransaction())
                 {
-                    conn.Open();
-
-                    string querySub = @"
-                UPDATE Subscription 
-                SET status = 'aktif', 
-                    start_date = NOW(), 
-                    end_date = NOW() + INTERVAL '30 days',
-                    harga = @harga
-                WHERE member_id = @memberId 
-                  AND LOWER(status) = 'pending';";
-
-                    int rowsAffected = 0;
-                    using (var cmd = new NpgsqlCommand(querySub, conn))
+                    try
                     {
-                        cmd.Parameters.AddWithValue("memberId", memberId);
-                        cmd.Parameters.AddWithValue("harga", harga);
-                        rowsAffected = cmd.ExecuteNonQuery();
-                    }
+                        string querySub = @"
+                    UPDATE Subscription 
+                    SET status = 'active', 
+                        start_date = NOW(), 
+                        end_date = NOW() + INTERVAL '30 days',
+                        harga = @harga
+                    WHERE member_id = @memberId 
+                      AND LOWER(status) = 'pending';
+                ";
 
-                    if (rowsAffected == 0)
-                    {
-                        string backupQuery = @"
-                            INSERT INTO Subscription (member_id, plan, harga, start_date, end_date, status)
-                            VALUES (@memberId, 'Premium', @harga, NOW(), NOW() + INTERVAL '30 days', 'aktif')";
+                        int rowsAffected = 0;
 
-                        using (var backupCmd = new NpgsqlCommand(backupQuery, conn))
+                        using (var cmd = new NpgsqlCommand(querySub, conn))
                         {
-                            backupCmd.Parameters.AddWithValue("memberId", memberId);
-                            backupCmd.Parameters.AddWithValue("harga", harga);
-                            backupCmd.ExecuteNonQuery();
+                            cmd.Transaction = transaction;
+                            cmd.Parameters.AddWithValue("memberId", memberId);
+                            cmd.Parameters.AddWithValue("harga", harga);
+                            rowsAffected = cmd.ExecuteNonQuery();
                         }
-                    }
-                    string queryTransaksi = @"
-                        INSERT INTO Transaksi (member_id, tipe, deskripsi, harga, status, tgl_transaksi, metode_pembayaran)
-                        VALUES (@memberId, 'Pembayaran', 'Langganan Premium 30 Hari', @harga, 'berhasil', NOW(), @metode);";
 
-                    using (var cmdTrans = new NpgsqlCommand(queryTransaksi, conn))
+                        if (rowsAffected == 0)
+                        {
+                            string backupQuery = @"
+                        INSERT INTO Subscription 
+                        (member_id, plan, harga, start_date, end_date, status)
+                        VALUES 
+                        (@memberId, 'Premium', @harga, NOW(), NOW() + INTERVAL '30 days', 'active');
+                    ";
+
+                            using (var backupCmd = new NpgsqlCommand(backupQuery, conn))
+                            {
+                                backupCmd.Transaction = transaction;
+                                backupCmd.Parameters.AddWithValue("memberId", memberId);
+                                backupCmd.Parameters.AddWithValue("harga", harga);
+                                backupCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        string queryTransaksi = @"
+                    INSERT INTO Transaksi 
+                    (member_id, tipe, deskripsi, harga, status, tgl_transaksi, metode_pembayaran)
+                    VALUES 
+                    (@memberId, 'Pembayaran', 'Langganan Premium 30 Hari', @harga, 'berhasil', NOW(), @metode)
+                    RETURNING transaksi_id;
+                ";
+
+                        int transaksiId;
+
+                        using (var cmdTrans = new NpgsqlCommand(queryTransaksi, conn))
+                        {
+                            cmdTrans.Transaction = transaction;
+                            cmdTrans.Parameters.AddWithValue("memberId", memberId);
+                            cmdTrans.Parameters.AddWithValue("harga", harga);
+                            cmdTrans.Parameters.AddWithValue("metode", metodeBayar);
+
+                            transaksiId = Convert.ToInt32(cmdTrans.ExecuteScalar());
+                        }
+
+                        string queryDetail = @"
+                    INSERT INTO DetailTransaksi
+                    (transaksi_id, item, harga, status, created_at)
+                    VALUES
+                    (@transaksiId, 'Premium 1 Bulan', @harga, 'berhasil', NOW());
+                ";
+
+                        using (var cmdDetail = new NpgsqlCommand(queryDetail, conn))
+                        {
+                            cmdDetail.Transaction = transaction;
+                            cmdDetail.Parameters.AddWithValue("transaksiId", transaksiId);
+                            cmdDetail.Parameters.AddWithValue("harga", harga);
+                            cmdDetail.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                        return true;
+                    }
+                    catch (Exception)
                     {
-                        cmdTrans.Parameters.AddWithValue("memberId", memberId);
-                        cmdTrans.Parameters.AddWithValue("harga", harga);
-                        cmdTrans.Parameters.AddWithValue("metode", metodeBayar);
-                        cmdTrans.ExecuteNonQuery();
+                        transaction.Rollback();
+                        return false;
                     }
-
-                    return true;
                 }
-            }
-            catch (Exception)
-            {
-                return false;
             }
         }
         public static DataTable AmbilSemuaSubscription()
@@ -132,10 +168,27 @@ namespace projekpbobismillah.models
             using (var conn = new NpgsqlConnection(connString))
             {
                 conn.Open();
-                string query = @"
-                    UPDATE Subscription 
-                    SET status = @status, start_date = NOW(), end_date = NOW() + INTERVAL '30 days'
-                    WHERE subscription_id = @id;";
+
+                string query;
+
+                if (statusBaru.ToLower() == "active")
+                {
+                    query = @"
+                UPDATE Subscription 
+                SET status = @status, 
+                    start_date = NOW(), 
+                    end_date = NOW() + INTERVAL '30 days'
+                WHERE subscription_id = @id;
+            ";
+                }
+                else
+                {
+                    query = @"
+                UPDATE Subscription 
+                SET status = @status
+                WHERE subscription_id = @id;
+            ";
+                }
 
                 using (var cmd = new NpgsqlCommand(query, conn))
                 {

@@ -8,19 +8,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using projekpbobismillah.Controllers;
 
 namespace projekpbobismillah.form
 {
     public partial class TambahAkunAdmin : Form
     {
-        private string connString =
-            "Host=localhost;Port=5432;Database=pbofixamin;Username=postgres;Password=safirah74";
+        private KelolaAkunAdminController kelolaAkunController;
 
         public bool DataSaved { get; set; } = false;
 
         public TambahAkunAdmin()
         {
             InitializeComponent();
+            kelolaAkunController = new KelolaAkunAdminController();
         }
 
         private void TambahAkunAdmin_Load(object sender, EventArgs e)
@@ -42,32 +43,7 @@ namespace projekpbobismillah.form
 
             try
             {
-                using (var conn = new NpgsqlConnection(connString))
-                {
-                    conn.Open();
-                    string queryHitung = "SELECT COUNT(*) FROM Admin";
-                    int totalAdminSekarang = 0;
-                    using (var cmdHitung = new NpgsqlCommand(queryHitung, conn))
-                    {
-                        totalAdminSekarang = Convert.ToInt32(cmdHitung.ExecuteScalar());
-                    }
-                    int nomorAdminBaru = totalAdminSekarang + 1;
-                    string namaOtomatis = "Admin " + nomorAdminBaru;
-
-                    string queryInsert = @"
-                        INSERT INTO Admin(email, password, nama) 
-                        VALUES(@Email, @Password, @Nama)
-                    ";
-
-                    using (var cmdInsert = new NpgsqlCommand(queryInsert, conn))
-                    {
-                        cmdInsert.Parameters.AddWithValue("Email", email);
-                        cmdInsert.Parameters.AddWithValue("Password", password);
-                        cmdInsert.Parameters.AddWithValue("Nama", namaOtomatis); // Memakai nama otomatis
-
-                        cmdInsert.ExecuteNonQuery();
-                    }
-                }
+                kelolaAkunController.TambahAdmin(email, password);
 
                 DataSaved = true;
                 MessageBox.Show("Admin berhasil ditambahkan!");
